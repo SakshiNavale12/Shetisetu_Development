@@ -1,0 +1,134 @@
+const mongoose = require('mongoose');
+const validator = require('validator');
+const bcrypt = require('bcryptjs');
+const { toJSON, paginate } = require('./plugins');
+const { roles } = require('../config/roles');
+
+const userSchema = mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    email: {
+      type: String,
+      unique: true,
+      sparse: true, // Allows multiple null values
+      trim: true,
+      lowercase: true,
+      validate(value) {
+        if (value && !validator.isEmail(value)) {
+          throw new Error('Invalid email');
+        }
+      },
+    },
+    mobile: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      validate(value) {
+        if (value && !/^[6-9]\d{9}$/.test(value)) {
+          throw new Error('Invalid mobile number. Must be 10 digits starting with 6-9');
+        }
+      },
+    },
+    aadhaar: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      validate(value) {
+        if (value && !/^\d{12}$/.test(value)) {
+          throw new Error('Invalid Aadhaar number. Must be 12 digits');
+        }
+      },
+      private: true, // Sensitive data - excluded from JSON
+    },
+    password: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 8,
+      validate(value) {
+        if (!value.match(/\d/) || !value.match(/[a-zA-Z]/)) {
+          throw new Error('Password must contain at least one letter and one number');
+        }
+      },
+      private: true, // used by the toJSON plugin
+    },
+    role: {
+      type: String,
+      enum: roles,
+      default: 'farmer',
+    },
+    language: {
+      type: String,
+      enum: ['en', 'mr', 'hi'],
+      default: 'mr', // Marathi as default for Maharashtra farmers
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    isMobileVerified: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// add plugin that converts mongoose to json
+userSchema.plugin(toJSON);
+userSchema.plugin(paginate);
+
+/**
+ * Check if email is taken
+ * @param {string} email - The user's email
+ * @param {ObjectId} [excludeUserId] - The id of the user to be excluded
+ * @returns {Promise<boolean>}
+ */
+userSchema.statics.isEmailTaken = async function (email, excludeUserId) {
+  const user = await this.findOne({ email, _id: { $ne: excludeUserId } });
+  return !!user;
+};
+
+/**
+ * Check if mobile is taken
+ * @param {string} mobile - The user's mobile number
+ * @param {ObjectId} [excludeUserId] - The id of the user to be excluded
+ * @returns {Promise<boolean>}
+ */
+userSchema.statics.isMobileTaken = async function (mobile, excludeUserId) {
+  const user = await this.findOne({ mobile, _id: { $ne: excludeUserId } });
+  return !!user;
+};
+
+/**
+ * Check if password matches the user's password
+ * @param {string} password
+ * @returns {Promise<boolean>}
+ */
+userSchema.methods.isPasswordMatch = async function (password) {
+  const user = this;
+  return bcrypt.compare(password, user.password);
+};
+
+userSchema.pre('save', async function (next) {
+  const user = this;
+  if (user.isModified('password')) {
+    user.password = await bcrypt.hash(user.password, 8);
+  }
+  next();
+});
+
+/**
+ * @typedef User
+ */
+const User = mongoose.model('User', userSchema);
+
+module.exports = User;

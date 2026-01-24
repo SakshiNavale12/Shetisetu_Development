@@ -1,0 +1,12 @@
+module.exports.authService = require('./auth.service');
+module.exports.emailService = require('./email.service');
+module.exports.tokenService = require('./token.service');
+module.exports.userService = require('./user.service');
+module.exports.farmerService = require('./farmer.service');
+module.exports.cropSurveyService = require('./cropSurvey.service');
+module.exports.lossReportService = require('./lossReport.service');
+module.exports.notificationService = require('./notification.service');
+module.exports.panchanamaService = require('./panchanama.service');
+module.exports.compensationService = require('./compensation.service');
+module.exports.analyticsService = require('./analytics.service');
+module.exports.uploadService = require('./upload.service');
