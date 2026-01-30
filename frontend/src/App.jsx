@@ -15,6 +15,8 @@ import OfficerFarmerDetail from './pages/OfficerFarmerDetail';
 import AuthorityDashboard from './pages/AuthorityDashboard';
 import Panchanama from './pages/Panchanama';
 import DesignSystemShowcase from './pages/DesignSystemShowcase';
+import FarmerAssistant from './pages/FarmerAssistant';
+import SmartPredictions from './pages/SmartPredictions';
 import NotFound from './pages/NotFound';
 
 // Home redirect component
@@ -68,6 +70,8 @@ function App() {
             <Route path="/loss-report/new" element={<LossReport />} />
             <Route path="/loss-report/:reportId" element={<LossReportDetail />} />
             <Route path="/documents" element={<Documents />} />
+            <Route path="/assistant" element={<FarmerAssistant />} />
+            <Route path="/smart-predictions" element={<SmartPredictions />} />
             {/* Officer Routes */}
             <Route path="/officer/dashboard" element={<OfficerDashboard />} />
             <Route path="/officer/farmer/:farmerId" element={<OfficerFarmerDetail />} />

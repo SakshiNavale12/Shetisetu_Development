@@ -10,3 +10,4 @@ module.exports.panchanamaService = require('./panchanama.service');
 module.exports.compensationService = require('./compensation.service');
 module.exports.analyticsService = require('./analytics.service');
 module.exports.uploadService = require('./upload.service');
+module.exports.mlService = require('./ml.service');

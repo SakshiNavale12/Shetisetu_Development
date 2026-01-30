@@ -28,14 +28,20 @@ function NotificationBell() {
             if (res.ok) {
                 const data = await res.json();
                 setUnreadCount(data.count);
+            } else if (res.status === 401) {
+                // Token expired or invalid - silently ignore
+                return;
             }
         } catch (error) {
-            console.error('Error fetching unread count:', error);
+            // Network errors - silently ignore
         }
     };
 
     const fetchNotifications = async () => {
         try {
+            const token = localStorage.getItem('accessToken');
+            if (!token) return;
+
             setLoading(true);
             const res = await fetch(`${API_URL}/notifications?limit=10`, {
                 headers: getAuthHeaders(),
@@ -43,9 +49,12 @@ function NotificationBell() {
             if (res.ok) {
                 const data = await res.json();
                 setNotifications(data.results || []);
+            } else if (res.status === 401) {
+                // Token expired or invalid - silently ignore
+                return;
             }
         } catch (error) {
-            console.error('Error fetching notifications:', error);
+            // Network errors - silently ignore
         } finally {
             setLoading(false);
         }

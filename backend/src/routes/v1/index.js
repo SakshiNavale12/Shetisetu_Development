@@ -8,6 +8,7 @@ const notificationRoute = require('./notification.route');
 const panchanamaRoute = require('./panchanama.route');
 const analyticsRoute = require('./analytics.route');
 const uploadRoute = require('./upload.route');
+const mlRoute = require('./ml.route');
 const docsRoute = require('./docs.route');
 const config = require('../../config/config');
 
@@ -49,6 +50,10 @@ const defaultRoutes = [
   {
     path: '/upload',
     route: uploadRoute,
+  },
+  {
+    path: '/ml',
+    route: mlRoute,
   },
 ];
 

@@ -129,6 +129,14 @@ function Dashboard() {
       description: 'View & report losses'
     },
     {
+      icon: '🤖',
+      title: 'Farmer Assistant',
+      titleMr: 'शेतकरी सहाय्यक',
+      link: '/assistant',
+      color: 'purple',
+      description: 'Get help with schemes'
+    },
+    {
       icon: '👤',
       title: 'My Profile',
       titleMr: 'माझे प्रोफाइल',
@@ -143,6 +151,14 @@ function Dashboard() {
       link: '/documents',
       color: 'amber',
       description: 'Upload & manage documents'
+    },
+    {
+      icon: '🤖',
+      title: 'Smart Predictions',
+      titleMr: 'स्मार्ट अंदाज',
+      link: '/smart-predictions',
+      color: 'indigo',
+      description: 'AI-powered crop insights'
     },
   ];
 

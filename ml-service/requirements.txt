@@ -1,0 +1,22 @@
+# Flask and Web
+flask>=3.0.0
+flask-cors>=4.0.0
+python-dotenv>=1.0.0
+
+# ML Libraries (using flexible versions for Windows compatibility)
+scikit-learn>=1.4.0
+xgboost>=2.0.0
+pandas>=2.0.0
+numpy>=1.24.0
+joblib>=1.3.0
+
+# Authentication
+PyJWT>=2.8.0
+
+# Data Processing
+requests>=2.31.0
+
+# Jupyter (optional - for notebooks)
+# jupyter>=1.0.0
+# matplotlib>=3.8.0
+# seaborn>=0.13.0

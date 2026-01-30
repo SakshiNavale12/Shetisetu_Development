@@ -4,12 +4,14 @@ import { Link } from 'react-router-dom';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/v1';
 
 function OfficerDashboard() {
-    const [stats, setStats] = useState({ pending: 0, verified: 0, rejected: 0, pendingEkyc: 0 });
+    const [stats, setStats] = useState({ pending: 0, verified: 0, rejected: 0, pendingEkyc: 0, totalFarmers: 0 });
     const [lossReports, setLossReports] = useState([]);
     const [panchanamas, setPanchanamas] = useState([]);
     const [pendingEkycFarmers, setPendingEkycFarmers] = useState([]);
+    const [allFarmers, setAllFarmers] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('pending');
+    const [activeTab, setActiveTab] = useState('farmers');
+    const [searchQuery, setSearchQuery] = useState('');
 
     const getAuthHeaders = () => {
         const token = localStorage.getItem('accessToken');
@@ -76,6 +78,20 @@ function OfficerDashboard() {
                 setStats(prev => ({ ...prev, pendingEkyc: (data.results || []).length }));
             } else {
                 console.error('Failed to fetch pending eKYC:', ekycRes.status);
+            }
+
+            // Fetch all registered farmers
+            const farmersRes = await fetch(`${API_URL}/farmers?limit=100`, {
+                headers: getAuthHeaders(),
+            });
+
+            if (farmersRes.ok) {
+                const data = await farmersRes.json();
+                console.log('All farmers:', data);
+                setAllFarmers(data.results || []);
+                setStats(prev => ({ ...prev, totalFarmers: (data.results || []).length }));
+            } else {
+                console.error('Failed to fetch all farmers:', farmersRes.status);
             }
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
@@ -147,7 +163,8 @@ function OfficerDashboard() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                <StatCard icon="👨‍🌾" label="Total Farmers" value={stats.totalFarmers} color="border-purple-500" />
                 <StatCard icon="📋" label="Pending Cases" value={stats.pending} color="border-yellow-500" />
                 <StatCard icon="✅" label="Verified" value={stats.verified} color="border-green-500" />
                 <StatCard icon="❌" label="Rejected" value={stats.rejected} color="border-red-500" />
@@ -156,17 +173,22 @@ function OfficerDashboard() {
 
             {/* Tabs */}
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                <div className="flex border-b">
-                    {['pending', 'ekyc', 'mycases'].map((tab) => (
+                <div className="flex border-b overflow-x-auto">
+                    {['farmers', 'pending', 'ekyc', 'mycases'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${activeTab === tab
+                            className={`flex-1 px-4 py-4 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab
                                     ? 'text-green-600 border-b-2 border-green-600 bg-green-50'
                                     : 'text-gray-600 hover:bg-gray-50'
                                 }`}
                         >
-                            {tab === 'pending' ? '📥 Pending Loss Reports' : tab === 'ekyc' ? '📄 eKYC Verification' : '📂 My Panchanamas'}
+                            {tab === 'farmers' ? '👨‍🌾 All Farmers' : tab === 'pending' ? '📥 Pending Reports' : tab === 'ekyc' ? '📄 eKYC Verification' : '📂 My Panchanamas'}
+                            {tab === 'farmers' && stats.totalFarmers > 0 && (
+                                <span className="ml-2 px-2 py-1 bg-purple-500 text-white text-xs rounded-full">
+                                    {stats.totalFarmers}
+                                </span>
+                            )}
                             {tab === 'ekyc' && stats.pendingEkyc > 0 && (
                                 <span className="ml-2 px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
                                     {stats.pendingEkyc}
@@ -177,7 +199,126 @@ function OfficerDashboard() {
                 </div>
 
                 <div className="p-6">
-                    {activeTab === 'pending' ? (
+                    {activeTab === 'farmers' ? (
+                        <div className="space-y-4">
+                            {/* Search Bar */}
+                            <div className="relative">
+                                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">🔍</span>
+                                <input
+                                    type="text"
+                                    placeholder="Search farmers by name, village, or taluka..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                                />
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
+
+                            {allFarmers.length === 0 ? (
+                                <div className="text-center py-8 text-gray-500">
+                                    <span className="text-4xl block mb-2">👨‍🌾</span>
+                                    <p>No registered farmers yet</p>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Farmer Name</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Land Parcels</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">eKYC Status</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registered</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-200">
+                                            {allFarmers
+                                                .filter(farmer => {
+                                                    if (!searchQuery) return true;
+                                                    const query = searchQuery.toLowerCase();
+                                                    return (
+                                                        farmer.fullName?.toLowerCase().includes(query) ||
+                                                        farmer.village?.toLowerCase().includes(query) ||
+                                                        farmer.taluka?.toLowerCase().includes(query) ||
+                                                        farmer.district?.toLowerCase().includes(query)
+                                                    );
+                                                })
+                                                .map((farmer) => (
+                                                    <tr key={farmer.id} className="hover:bg-gray-50">
+                                                        <td className="px-4 py-4 text-sm">
+                                                            <Link
+                                                                to={`/officer/farmer/${farmer.id}`}
+                                                                className="text-blue-600 hover:text-blue-800 font-medium hover:underline"
+                                                            >
+                                                                {farmer.fullName}
+                                                            </Link>
+                                                            {farmer.fatherName && (
+                                                                <p className="text-xs text-gray-500">S/o {farmer.fatherName}</p>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-4 text-sm text-gray-600">
+                                                            <div>{farmer.village}</div>
+                                                            <div className="text-xs text-gray-400">{farmer.taluka}, {farmer.district}</div>
+                                                        </td>
+                                                        <td className="px-4 py-4 text-sm text-gray-600">
+                                                            {farmer.landParcels?.length || 0} parcels
+                                                            {farmer.landParcels?.length > 0 && (
+                                                                <div className="text-xs text-gray-400">
+                                                                    {farmer.landParcels.reduce((sum, p) => sum + (p.area || 0), 0).toFixed(2)} ha total
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-4">
+                                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                                farmer.ekycStatus === 'verified' ? 'bg-green-100 text-green-800' :
+                                                                farmer.ekycStatus === 'submitted' ? 'bg-yellow-100 text-yellow-800' :
+                                                                farmer.ekycStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                                                                'bg-gray-100 text-gray-800'
+                                                            }`}>
+                                                                {farmer.ekycStatus?.toUpperCase() || 'PENDING'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-4 text-sm text-gray-600">
+                                                            {formatDate(farmer.createdAt)}
+                                                        </td>
+                                                        <td className="px-4 py-4">
+                                                            <Link
+                                                                to={`/officer/farmer/${farmer.id}`}
+                                                                className="text-green-600 hover:text-green-800 font-medium text-sm"
+                                                            >
+                                                                View Details →
+                                                            </Link>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                        </tbody>
+                                    </table>
+                                    {allFarmers.filter(farmer => {
+                                        if (!searchQuery) return true;
+                                        const query = searchQuery.toLowerCase();
+                                        return (
+                                            farmer.fullName?.toLowerCase().includes(query) ||
+                                            farmer.village?.toLowerCase().includes(query) ||
+                                            farmer.taluka?.toLowerCase().includes(query) ||
+                                            farmer.district?.toLowerCase().includes(query)
+                                        );
+                                    }).length === 0 && (
+                                        <div className="text-center py-8 text-gray-500">
+                                            <p>No farmers found matching "{searchQuery}"</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    ) : activeTab === 'pending' ? (
                         <div className="space-y-4">
                             {lossReports.length === 0 ? (
                                 <div className="text-center py-8 text-gray-500">
