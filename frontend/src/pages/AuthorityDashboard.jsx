@@ -3,6 +3,26 @@ import { Link } from 'react-router-dom';
 
 const API_URL = 'http://localhost:3000/v1';
 
+// Format amount with appropriate suffix (L for Lakhs, Cr for Crores)
+const formatAmount = (amount) => {
+    if (amount == null || isNaN(amount)) return '₹0';
+
+    const absAmount = Math.abs(amount);
+
+    if (absAmount >= 10000000) {
+        // 1 Crore or more
+        return `₹${(amount / 10000000).toFixed(2)} Cr`;
+    } else if (absAmount >= 100000) {
+        // 1 Lakh or more
+        return `₹${(amount / 100000).toFixed(2)} L`;
+    } else if (absAmount >= 1000) {
+        // Show with comma formatting for thousands
+        return `₹${amount.toLocaleString('en-IN')}`;
+    } else {
+        return `₹${amount}`;
+    }
+};
+
 function AuthorityDashboard() {
     const [pendingApprovals, setPendingApprovals] = useState([]);
     const [stats, setStats] = useState(null);
@@ -204,7 +224,7 @@ function AuthorityDashboard() {
                     <StatCard
                         icon="💰"
                         label="Disbursed (₹)"
-                        value={`₹${(stats.totalDisbursed / 10000000).toFixed(2)} Cr`}
+                        value={formatAmount(stats.totalDisbursed)}
                         color="border-purple-500"
                     />
                 </div>
