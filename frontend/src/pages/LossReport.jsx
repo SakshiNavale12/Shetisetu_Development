@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
@@ -6,6 +6,7 @@ import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
+import GeoTaggedPhotoUpload from '../components/ui/GeoTaggedPhotoUpload';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/v1';
 
@@ -41,6 +42,11 @@ function LossReport() {
     const [submitting, setSubmitting] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
     const [myReports, setMyReports] = useState([]);
+    // Geo-tagged photos collected before form submission
+    const [uploadedPhotos, setUploadedPhotos] = useState([]);
+    const [geoVerificationSummary, setGeoVerificationSummary] = useState(null);
+    // Ref to reset photo uploader key after submission
+    const photoUploaderKey = useRef(0);
 
     useEffect(() => {
         const storedUser = localStorage.getItem('user');
@@ -79,11 +85,20 @@ function LossReport() {
         }
     };
 
+    const handlePhotosUploaded = (photos, summary) => {
+        setUploadedPhotos(photos);
+        setGeoVerificationSummary(summary || null);
+    };
+
     const handleSubmit = async (values, { resetForm }) => {
         setSubmitting(true);
         setMessage({ type: '', text: '' });
         try {
             const token = localStorage.getItem('accessToken');
+
+            // Use GPS from the first uploaded photo as the field location (if available)
+            const firstGeo = uploadedPhotos.find(p => p.geoLocation)?.geoLocation || null;
+
             const response = await fetch(`${API_URL}/loss-reports`, {
                 method: 'POST',
                 headers: {
@@ -106,6 +121,16 @@ function LossReport() {
                     damagePercentage: Number(values.damagePercentage),
                     estimatedLoss: values.estimatedLoss ? Number(values.estimatedLoss) : undefined,
                     description: values.description,
+                    // Include geo-tagged photos if uploaded
+                    photos: uploadedPhotos.length > 0 ? uploadedPhotos.map(p => ({
+                        url: p.url,
+                        type: p.type || 'damage',
+                        caption: p.caption || '',
+                        geoLocation: p.geoLocation || null,
+                        capturedAt: p.capturedAt,
+                    })) : undefined,
+                    // Use GPS from photos as field location
+                    fieldLocation: firstGeo || undefined,
                 }),
             });
 
@@ -114,8 +139,11 @@ function LossReport() {
 
             setMessage({ type: 'success', text: 'Loss report submitted successfully! / नुकसान अहवाल यशस्वीरित्या सबमिट केला!' });
             resetForm();
+            setUploadedPhotos([]);
+            setGeoVerificationSummary(null);
+            photoUploaderKey.current += 1;
             fetchData();
-            navigate('/loss-report'); // Navigate back to list
+            navigate('/loss-report');
         } catch (error) {
             setMessage({ type: 'error', text: error.message });
         } finally {
@@ -526,6 +554,48 @@ function LossReport() {
                                     placeholder="Describe the damage in detail..."
                                 />
                             </div>
+                        </Card>
+
+                        {/* Geo-Tagged Photo Upload */}
+                        <Card>
+                            <h2 className="text-xl font-bold text-gray-800 mb-2 border-b pb-2">
+                                📷 Upload Damage Photos (Geo-Tagged) / नुकसानाचे फोटो अपलोड करा
+                            </h2>
+                            <p className="text-sm text-gray-500 mb-4">
+                                Upload photos of the damaged crop from the actual field.
+                                Your GPS location will be captured and attached to each photo
+                                for verification by the officer.
+                                <br />
+                                <span className="text-xs text-amber-600">
+                                    ⚠️ Photos must be taken at the affected land area / फोटो प्रभावित शेतातून काढणे आवश्यक आहे
+                                </span>
+                            </p>
+
+                            <GeoTaggedPhotoUpload
+                                key={photoUploaderKey.current}
+                                onPhotosUploaded={(photos) => handlePhotosUploaded(photos)}
+                                reportId="temp"
+                                maxPhotos={10}
+                                disabled={submitting}
+                            />
+
+                            {/* Geo-verification summary banner */}
+                            {geoVerificationSummary && (
+                                <div className={`mt-3 p-3 rounded border text-sm ${
+                                    geoVerificationSummary.hasWarnings
+                                        ? 'bg-yellow-50 border-yellow-300 text-yellow-800'
+                                        : 'bg-green-50 border-green-300 text-green-800'
+                                }`}>
+                                    {geoVerificationSummary.hasWarnings ? '⚠️' : '✓'}{' '}
+                                    {geoVerificationSummary.summary}
+                                </div>
+                            )}
+
+                            {uploadedPhotos.length > 0 && (
+                                <p className="mt-2 text-sm text-green-700 font-medium">
+                                    ✓ {uploadedPhotos.length} photo(s) ready to submit with this report
+                                </p>
+                            )}
                         </Card>
 
                         {/* Submit */}

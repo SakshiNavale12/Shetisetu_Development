@@ -3,6 +3,7 @@ const catchAsync = require('../utils/catchAsync');
 const { uploadService, farmerService } = require('../services');
 const ApiError = require('../utils/ApiError');
 const documentScannerService = require('../services/documentScanner.service');
+const geoVerificationService = require('../services/geoVerification.service');
 const { uploadBaseDir } = require('../config/upload');
 
 /**
@@ -63,15 +64,38 @@ const uploadLossReportPhotos = catchAsync(async (req, res) => {
 
   const gpsData = req.body.gpsData ? JSON.parse(req.body.gpsData) : null;
 
-  const photos = uploadedFiles.map((file, index) => ({
-    url: file.url,
-    type: req.body[`type_${index}`] || 'damage',
-    caption: req.body[`caption_${index}`] || '',
-    geoLocation: gpsData || file.exifGps || null,
-    capturedAt: new Date(),
-  }));
+  // Build photo objects with geoLocation (prefer supplied GPS over EXIF)
+  const photos = uploadedFiles.map((file, index) => {
+    const geoLocation = gpsData || file.exifGps || null;
+    return {
+      url: file.url,
+      type: req.body[`type_${index}`] || 'damage',
+      caption: req.body[`caption_${index}`] || '',
+      geoLocation,
+      capturedAt: new Date(),
+    };
+  });
 
-  res.status(httpStatus.OK).send({ photos });
+  // Geo-verification: validate each photo's location against the farmer's district
+  const farmerLocation = {
+    district: farmer.district,
+    taluka: farmer.taluka,
+    village: farmer.village,
+  };
+
+  const photosWithVerification = photos.map((photo) => {
+    const verification = geoVerificationService.verifyPhotoLocation(
+      photo.geoLocation,
+      farmerLocation
+    );
+    return { ...photo, geoVerification: verification };
+  });
+
+  const verificationSummary = geoVerificationService.buildVerificationSummary(
+    photosWithVerification.map((p) => p.geoVerification)
+  );
+
+  res.status(httpStatus.OK).send({ photos: photosWithVerification, geoVerificationSummary: verificationSummary });
 });
 
 /**
