@@ -135,6 +135,62 @@ const farmerSchema = mongoose.Schema(
                 uploadedAt: Date,
             },
         },
+        // Document scan results (OCR extracted data)
+        documentScans: {
+            aadhaar: {
+                extractedText: String,
+                parsedFields: {
+                    name: String,
+                    aadhaarNumber: String,
+                    dateOfBirth: String,
+                    address: String,
+                    gender: String,
+                },
+                confidence: Number,
+                scannedAt: Date,
+                scanStatus: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending' },
+            },
+            pan: {
+                extractedText: String,
+                parsedFields: {
+                    name: String,
+                    panNumber: String,
+                    dateOfBirth: String,
+                    fatherName: String,
+                },
+                confidence: Number,
+                scannedAt: Date,
+                scanStatus: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending' },
+            },
+            '7-12': {
+                extractedText: String,
+                parsedFields: {
+                    surveyNumber: String,
+                    ownerName: String,
+                    village: String,
+                    taluka: String,
+                    district: String,
+                    area: String,
+                    cropDetails: String,
+                },
+                confidence: Number,
+                scannedAt: Date,
+                scanStatus: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending' },
+            },
+            passbook: {
+                extractedText: String,
+                parsedFields: {
+                    accountHolderName: String,
+                    accountNumber: String,
+                    bankName: String,
+                    ifscCode: String,
+                    branchName: String,
+                },
+                confidence: Number,
+                scannedAt: Date,
+                scanStatus: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending' },
+            },
+        },
         // Profile completion status
         isProfileComplete: {
             type: Boolean,

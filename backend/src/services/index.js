@@ -11,3 +11,5 @@ module.exports.compensationService = require('./compensation.service');
 module.exports.analyticsService = require('./analytics.service');
 module.exports.uploadService = require('./upload.service');
 module.exports.mlService = require('./ml.service');
+module.exports.documentScannerService = require('./documentScanner.service');
+module.exports.reportGeneratorService = require('./reportGenerator.service');

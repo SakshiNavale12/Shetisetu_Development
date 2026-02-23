@@ -45,6 +45,10 @@ router
     .route('/:farmerId/ekyc')
     .patch(auth('manageFarmers'), validate(farmerValidation.updateEkyc), farmerController.updateEkycStatus);
 
+router
+    .route('/:farmerId/report')
+    .get(auth('manageFarmers'), validate(farmerValidation.getFarmer), farmerController.getFarmerReport);
+
 module.exports = router;
 
 /**

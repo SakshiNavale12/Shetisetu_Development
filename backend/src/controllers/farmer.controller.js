@@ -2,6 +2,7 @@ const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
 const { farmerService } = require('../services');
 const pick = require('../utils/pick');
+const reportGeneratorService = require('../services/reportGenerator.service');
 
 const createFarmer = catchAsync(async (req, res) => {
     const farmer = await farmerService.createFarmer(req.user.id, req.body);
@@ -80,6 +81,15 @@ const getPendingEkyc = catchAsync(async (req, res) => {
     res.send(result);
 });
 
+const getFarmerReport = catchAsync(async (req, res) => {
+    const report = await reportGeneratorService.generateFarmerReport(req.params.farmerId);
+    if (!report) {
+        res.status(httpStatus.NOT_FOUND).send({ message: 'Farmer not found' });
+        return;
+    }
+    res.send(report);
+});
+
 module.exports = {
     createFarmer,
     getMyProfile,
@@ -93,4 +103,5 @@ module.exports = {
     getFarmerWithDocuments,
     submitEkyc,
     getPendingEkyc,
+    getFarmerReport,
 };

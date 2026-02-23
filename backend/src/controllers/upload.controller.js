@@ -2,6 +2,8 @@ const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
 const { uploadService, farmerService } = require('../services');
 const ApiError = require('../utils/ApiError');
+const documentScannerService = require('../services/documentScanner.service');
+const { uploadBaseDir } = require('../config/upload');
 
 /**
  * Upload files for crop survey
@@ -105,13 +107,36 @@ const uploadDocuments = catchAsync(async (req, res) => {
     filename: uploadedFile.filename,
     uploadedAt: new Date(),
   };
+
+  // Mark scan as pending before saving
+  if (!farmer.documentScans) {
+    farmer.documentScans = {};
+  }
+  farmer.documentScans[documentType] = {
+    scanStatus: 'pending',
+    scannedAt: null,
+  };
+
   await farmer.save();
+
+  // Trigger background OCR scan (non-blocking)
+  const scannableTypes = ['aadhaar', 'pan', '7-12', 'passbook'];
+  if (scannableTypes.includes(documentType)) {
+    documentScannerService.triggerBackgroundScan(
+      farmer,
+      documentType,
+      uploadedFile.url,
+      uploadedFile.mimeType || file.mimetype,
+      uploadBaseDir
+    );
+  }
 
   res.status(httpStatus.OK).send({
     url: uploadedFile.url,
     documentType,
     filename: uploadedFile.filename,
     uploadedAt: new Date(),
+    scanStatus: 'pending',
   });
 });
 

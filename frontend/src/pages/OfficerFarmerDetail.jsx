@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
+import FarmerAIReport from '../components/officer/FarmerAIReport';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/v1';
 const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3000';
@@ -360,6 +361,17 @@ function OfficerFarmerDetail() {
                         );
                     })}
                 </div>
+            </Card>
+
+            {/* AI Report Section */}
+            <Card>
+                <h2 className="text-xl font-bold mb-2 border-b pb-2">
+                    🤖 AI Summary Report / एआय सारांश अहवाल
+                </h2>
+                <p className="text-sm text-gray-500 mb-3">
+                    Auto-generated report with document scan results, cross-validation checks, and officer recommendations.
+                </p>
+                <FarmerAIReport farmerId={farmerId} />
             </Card>
 
             {/* eKYC Approval Modal */}
