@@ -20,14 +20,15 @@ const createLossReport = {
         estimatedLoss: Joi.number().min(0),
         photos: Joi.array().items(
             Joi.object().keys({
-                url: Joi.string().uri().required(),
+                url: Joi.string().required(),           // relative path, not a full URI
                 type: Joi.string().valid('damage', 'field', 'evidence'),
-                caption: Joi.string().max(200),
+                caption: Joi.string().allow('').max(200), // allow empty string
                 geoLocation: Joi.object().keys({
                     latitude: Joi.number().min(-90).max(90),
                     longitude: Joi.number().min(-180).max(180),
-                    accuracy: Joi.number().positive(),
-                }),
+                    accuracy: Joi.number().min(0),
+                }).allow(null),
+                capturedAt: Joi.date(),               // sent by the uploader
             })
         ),
         fieldLocation: Joi.object().keys({
@@ -51,14 +52,15 @@ const updateLossReport = {
             estimatedLoss: Joi.number().min(0),
             photos: Joi.array().items(
                 Joi.object().keys({
-                    url: Joi.string().uri().required(),
+                    url: Joi.string().required(),
                     type: Joi.string().valid('damage', 'field', 'evidence'),
-                    caption: Joi.string().max(200),
+                    caption: Joi.string().allow('').max(200),
                     geoLocation: Joi.object().keys({
                         latitude: Joi.number().min(-90).max(90),
                         longitude: Joi.number().min(-180).max(180),
-                        accuracy: Joi.number().positive(),
-                    }),
+                        accuracy: Joi.number().min(0),
+                    }).allow(null),
+                    capturedAt: Joi.date(),
                 })
             ),
             description: Joi.string().max(1000),

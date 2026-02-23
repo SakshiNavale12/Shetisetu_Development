@@ -16,8 +16,14 @@ const createLossReport = async (userId, reportBody) => {
         throw new ApiError(httpStatus.BAD_REQUEST, 'Please create your farmer profile first');
     }
 
+    // Strip UI-only geoVerification field from each photo before persisting
+    const sanitisedPhotos = Array.isArray(reportBody.photos)
+        ? reportBody.photos.map(({ geoVerification, ...rest }) => rest)
+        : undefined;
+
     return LossReport.create({
         ...reportBody,
+        ...(sanitisedPhotos !== undefined ? { photos: sanitisedPhotos } : {}),
         farmer: farmer._id,
         status: 'submitted',
         dateReported: new Date(),

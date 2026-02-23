@@ -12,6 +12,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import OfficerDashboard from './pages/OfficerDashboard';
 import OfficerFarmerDetail from './pages/OfficerFarmerDetail';
+import OfficerLossReportDetail from './pages/OfficerLossReportDetail';
 import AuthorityDashboard from './pages/AuthorityDashboard';
 import Panchanama from './pages/Panchanama';
 import DesignSystemShowcase from './pages/DesignSystemShowcase';
@@ -75,6 +76,7 @@ function App() {
             {/* Officer Routes */}
             <Route path="/officer/dashboard" element={<OfficerDashboard />} />
             <Route path="/officer/farmer/:farmerId" element={<OfficerFarmerDetail />} />
+            <Route path="/officer/loss-report/:reportId" element={<OfficerLossReportDetail />} />
             <Route path="/officer/panchanama/new" element={<Panchanama />} />
             <Route path="/officer/panchanama/:id" element={<Panchanama />} />
             {/* Authority Routes */}

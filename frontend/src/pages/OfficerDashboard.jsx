@@ -357,10 +357,16 @@ function OfficerDashboard() {
                                                     <td className="px-4 py-4 text-sm text-gray-600">{report.affectedArea} ha</td>
                                                     <td className="px-4 py-4 text-sm text-gray-600">{formatDate(report.dateReported)}</td>
                                                     <td className="px-4 py-4">{getStatusBadge(report.status)}</td>
-                                                    <td className="px-4 py-4">
+                                                    <td className="px-4 py-4 space-y-1">
+                                                        <Link
+                                                            to={`/officer/loss-report/${report.id}`}
+                                                            className="block text-blue-600 hover:text-blue-800 font-medium text-sm"
+                                                        >
+                                                            📷 View Evidence →
+                                                        </Link>
                                                         <Link
                                                             to={`/officer/panchanama/new?lossReport=${report.id}`}
-                                                            className="text-green-600 hover:text-green-800 font-medium text-sm"
+                                                            className="block text-green-600 hover:text-green-800 font-medium text-sm"
                                                         >
                                                             Start Inspection →
                                                         </Link>
