@@ -16,9 +16,10 @@ if __name__ == '__main__':
     print(f"  Health check:      http://localhost:{port}/api/v1/health")
     print("")
     print("  Endpoints:")
-    print("  - POST /api/v1/predict/yield  (Yield Prediction)")
-    print("  - POST /api/v1/predict/risk   (Risk Assessment)")
-    print("  - POST /api/v1/predict/loss   (Loss Probability)")
+    print("  - POST /api/v1/predict/yield      (Yield Prediction)")
+    print("  - POST /api/v1/predict/risk        (Risk Assessment)")
+    print("  - POST /api/v1/predict/loss        (Loss Probability)")
+    print("  - POST /api/v1/predict/calamity    (Calamity Verification)")
     print("=" * 60)
     print("")
 

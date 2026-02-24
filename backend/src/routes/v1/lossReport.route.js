@@ -35,6 +35,11 @@ router
     .route('/:reportId/status')
     .patch(auth('verifyCases'), validate(lossReportValidation.updateReportStatus), lossReportController.updateReportStatus);
 
+// Officer: manually (re-)run AI calamity verification for a report
+router
+    .route('/:reportId/verify-calamity')
+    .post(auth('verifyCases'), validate(lossReportValidation.getReport), lossReportController.runCalamityVerification);
+
 module.exports = router;
 
 /**

@@ -17,12 +17,13 @@ def create_app(config_class=Config):
     ])
 
     # Register blueprints
-    from app.api.routes import health, yield_prediction, risk_assessment, loss_probability
+    from app.api.routes import health, yield_prediction, risk_assessment, loss_probability, calamity_verification
 
     app.register_blueprint(health.bp, url_prefix='/api/v1/health')
     app.register_blueprint(yield_prediction.bp, url_prefix='/api/v1/predict/yield')
     app.register_blueprint(risk_assessment.bp, url_prefix='/api/v1/predict/risk')
     app.register_blueprint(loss_probability.bp, url_prefix='/api/v1/predict/loss')
+    app.register_blueprint(calamity_verification.bp, url_prefix='/api/v1/predict/calamity')
 
     # Register error handlers
     from app.api.middleware.error_handler import register_error_handlers

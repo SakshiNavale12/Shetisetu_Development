@@ -80,6 +80,31 @@ const predictLoss = async (data, token) => {
 };
 
 /**
+ * Verify whether a calamity actually occurred at the given geo-location and date
+ * @param {Object} data - { district, latitude, longitude, lossDate, lossType }
+ * @param {string} token - JWT token
+ * @returns {Promise<Object>}
+ */
+const verifyCalamity = async (data, token) => {
+  try {
+    const response = await mlClient.post('/predict/calamity', data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    // Return a fallback result instead of throwing — calamity check is non-blocking
+    return {
+      calamity_verified: null,
+      confidence: 0,
+      confidence_label: 'Unavailable',
+      evidence_summary: 'AI calamity verification service is currently unavailable.',
+      model_type: 'unavailable',
+      error: error.message,
+    };
+  }
+};
+
+/**
  * Handle ML service errors
  * @param {Error} error
  * @returns {Error}
@@ -110,4 +135,5 @@ module.exports = {
   predictYield,
   assessRisk,
   predictLoss,
+  verifyCalamity,
 };

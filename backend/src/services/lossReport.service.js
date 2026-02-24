@@ -2,6 +2,7 @@ const httpStatus = require('http-status');
 const { LossReport, Farmer } = require('../models');
 const ApiError = require('../utils/ApiError');
 const notificationService = require('./notification.service');
+const { verifyCalamity: weatherVerifyCalamity } = require('./calamityWeatherVerification.service');
 
 /**
  * Create a loss report
@@ -21,13 +22,50 @@ const createLossReport = async (userId, reportBody) => {
         ? reportBody.photos.map(({ geoVerification, ...rest }) => rest)
         : undefined;
 
-    return LossReport.create({
+    const report = await LossReport.create({
         ...reportBody,
         ...(sanitisedPhotos !== undefined ? { photos: sanitisedPhotos } : {}),
         farmer: farmer._id,
         status: 'submitted',
         dateReported: new Date(),
     });
+
+    // Trigger real-time AI calamity verification in background (non-blocking)
+    setImmediate(async () => {
+        try {
+            const farmerDoc = await Farmer.findById(report.farmer);
+            const gps = report.fieldLocation ||
+                (report.photos && report.photos.find(p => p.geoLocation?.latitude)?.geoLocation);
+
+            const result = await weatherVerifyCalamity({
+                district:  farmerDoc ? farmerDoc.district : '',
+                latitude:  gps ? gps.latitude  : null,
+                longitude: gps ? gps.longitude : null,
+                lossDate:  report.lossDate ? report.lossDate.toISOString().slice(0, 10) : '',
+                lossType:  report.lossType,
+            });
+
+            await LossReport.findByIdAndUpdate(report._id, {
+                calamityVerification: {
+                    verified:          result.calamity_verified,
+                    confidence:        result.confidence,
+                    confidenceLabel:   result.confidence_label,
+                    calamityType:      result.calamity_type,
+                    calamityTypeMr:    result.calamity_type_mr,
+                    evidenceSummary:   result.evidence_summary,
+                    evidenceSummaryMr: result.evidence_summary_mr,
+                    weatherStats:      result.weather_stats,
+                    dataSource:        result.data_source,
+                    modelType:         result.model_type,
+                    verifiedAt:        new Date(),
+                },
+            });
+        } catch (err) {
+            console.error('[CalamityVerification] Background check failed:', err.message);
+        }
+    });
+
+    return report;
 };
 
 /**
@@ -237,6 +275,47 @@ const getLossReportStats = async (filter = {}) => {
     return { byStatus: stats, byLossType };
 };
 
+/**
+ * Run (or re-run) AI calamity verification for an existing report
+ * @param {ObjectId} reportId
+ * @param {string} token - JWT for ML service
+ * @returns {Promise<Object>} updated report
+ */
+const runCalamityVerification = async (reportId) => {
+    const report = await getLossReportById(reportId);
+    if (!report) {
+        throw new ApiError(httpStatus.NOT_FOUND, 'Loss report not found');
+    }
+
+    const farmerDoc = await Farmer.findById(report.farmer._id || report.farmer);
+    const gps = report.fieldLocation ||
+        (report.photos && report.photos.find(p => p.geoLocation?.latitude)?.geoLocation);
+
+    const result = await weatherVerifyCalamity({
+        district:  farmerDoc ? farmerDoc.district : '',
+        latitude:  gps ? gps.latitude  : null,
+        longitude: gps ? gps.longitude : null,
+        lossDate:  report.lossDate ? report.lossDate.toISOString().slice(0, 10) : '',
+        lossType:  report.lossType,
+    });
+
+    report.calamityVerification = {
+        verified:          result.calamity_verified,
+        confidence:        result.confidence,
+        confidenceLabel:   result.confidence_label,
+        calamityType:      result.calamity_type,
+        calamityTypeMr:    result.calamity_type_mr,
+        evidenceSummary:   result.evidence_summary,
+        evidenceSummaryMr: result.evidence_summary_mr,
+        weatherStats:      result.weather_stats,
+        dataSource:        result.data_source,
+        modelType:         result.model_type,
+        verifiedAt:        new Date(),
+    };
+    await report.save();
+    return report;
+};
+
 module.exports = {
     createLossReport,
     getLossReportsByUser,
@@ -246,4 +325,5 @@ module.exports = {
     queryLossReports,
     updateLossReportStatus,
     getLossReportStats,
+    runCalamityVerification,
 };
