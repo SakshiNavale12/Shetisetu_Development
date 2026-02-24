@@ -62,6 +62,11 @@ const getStats = catchAsync(async (req, res) => {
     res.send(stats);
 });
 
+const runCalamityVerification = catchAsync(async (req, res) => {
+    const report = await lossReportService.runCalamityVerification(req.params.reportId);
+    res.send(report);
+});
+
 module.exports = {
     createLossReport,
     getMyReports,
@@ -71,4 +76,5 @@ module.exports = {
     queryReports,
     updateReportStatus,
     getStats,
+    runCalamityVerification,
 };

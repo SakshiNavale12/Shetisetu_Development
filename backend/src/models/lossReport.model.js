@@ -85,6 +85,20 @@ const lossReportSchema = mongoose.Schema(
             longitude: { type: Number },
             accuracy: { type: Number },
         },
+        // AI calamity verification result (auto-populated on submission)
+        calamityVerification: {
+            verified: { type: Boolean, default: null },
+            confidence: { type: Number },
+            confidenceLabel: { type: String },
+            calamityType: { type: String },
+            calamityTypeMr: { type: String },
+            evidenceSummary: { type: String },
+            evidenceSummaryMr: { type: String },
+            weatherStats: { type: mongoose.Schema.Types.Mixed },
+            dataSource: { type: String },
+            modelType: { type: String },
+            verifiedAt: { type: Date },
+        },
         // Description
         description: {
             type: String,

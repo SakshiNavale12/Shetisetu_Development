@@ -232,6 +232,7 @@ function OfficerLossReportDetail() {
     const [remarks, setRemarks] = useState('');
     const [siteVisitDate, setSiteVisitDate] = useState('');
     const [approvedAmount, setApprovedAmount] = useState('');
+    const [runningVerification, setRunningVerification] = useState(false);
 
     const getAuthHeaders = () => ({
         Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
@@ -288,6 +289,29 @@ function OfficerLossReportDetail() {
             setMessage({ type: 'error', text: err.message });
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const handleRunCalamityVerification = async () => {
+        setRunningVerification(true);
+        setMessage({ type: '', text: '' });
+        try {
+            const res = await fetch(`${API_URL}/loss-reports/${reportId}/verify-calamity`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+            });
+            if (res.ok) {
+                const updated = await res.json();
+                setReport(updated);
+                setMessage({ type: 'success', text: 'AI calamity verification completed.' });
+            } else {
+                const err = await res.json();
+                setMessage({ type: 'error', text: err.message || 'Verification failed' });
+            }
+        } catch (err) {
+            setMessage({ type: 'error', text: err.message });
+        } finally {
+            setRunningVerification(false);
         }
     };
 
@@ -385,6 +409,144 @@ function OfficerLossReportDetail() {
                     </div>
                 </div>
             </Card>
+
+            {/* ── AI CALAMITY VERIFICATION PANEL ── */}
+            {(() => {
+                const cv = report.calamityVerification;
+                const verifiableTypes = ['drought', 'flood', 'hailstorm', 'pest', 'unseasonal_rain', 'frost', 'fire'];
+                const isVerifiable = verifiableTypes.includes(report.lossType);
+
+                if (!isVerifiable) return null;
+
+                const bgClass = !cv
+                    ? 'bg-gray-50 border-gray-200'
+                    : cv.verified === true
+                    ? 'bg-green-50 border-green-300'
+                    : cv.verified === false
+                    ? 'bg-red-50 border-red-300'
+                    : 'bg-yellow-50 border-yellow-200';
+
+                const icon = !cv
+                    ? '🤖'
+                    : cv.verified === true
+                    ? '✅'
+                    : cv.verified === false
+                    ? '❌'
+                    : '⏳';
+
+                return (
+                    <Card className={bgClass}>
+                        <div className="flex items-start justify-between gap-4 flex-wrap">
+                            <div className="flex items-start gap-3">
+                                <span className="text-3xl">{icon}</span>
+                                <div>
+                                    <h2 className="text-lg font-bold text-gray-800">
+                                        AI Calamity Verification / AI आपत्ती पडताळणी
+                                    </h2>
+                                    {!cv ? (
+                                        <p className="text-sm text-gray-500 mt-1">
+                                            No AI verification has been run yet for this report.
+                                            Click "Run Verification" to check if the claimed {report.lossType.replace('_', ' ')} is
+                                            historically consistent with this location and date.
+                                        </p>
+                                    ) : (
+                                        <div className="mt-2 space-y-2">
+                                            {/* Verdict */}
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className={`px-3 py-1 rounded-full text-sm font-bold border ${
+                                                    cv.verified === true
+                                                        ? 'bg-green-100 text-green-800 border-green-400'
+                                                        : 'bg-red-100 text-red-800 border-red-400'
+                                                }`}>
+                                                    {cv.verified === true ? '✓ Calamity Confirmed' : '✗ Calamity Not Confirmed'}
+                                                </span>
+                                                <span className="text-xs bg-white border border-gray-300 px-2 py-1 rounded-full text-gray-600">
+                                                    {cv.calamityType} / {cv.calamityTypeMr}
+                                                </span>
+                                            </div>
+
+                                            {/* Confidence bar */}
+                                            <div>
+                                                <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                                                    <span>AI Confidence</span>
+                                                    <span className="font-semibold">{cv.confidence}% — {cv.confidenceLabel}</span>
+                                                </div>
+                                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                                    <div
+                                                        className={`h-2 rounded-full transition-all ${
+                                                            cv.confidence >= 70 ? 'bg-green-500' :
+                                                            cv.confidence >= 45 ? 'bg-yellow-500' : 'bg-red-400'
+                                                        }`}
+                                                        style={{ width: `${cv.confidence}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Evidence summary */}
+                                            <div className="bg-white bg-opacity-70 rounded p-3 text-sm border border-gray-200">
+                                                <p className="font-semibold text-gray-700 mb-1">📋 Evidence / पुरावा</p>
+                                                <p className="text-gray-700">{cv.evidenceSummary}</p>
+                                                {cv.evidenceSummaryMr && (
+                                                    <p className="text-gray-500 text-xs mt-1 italic">{cv.evidenceSummaryMr}</p>
+                                                )}
+                                            </div>
+
+                                            {/* Actual weather data table */}
+                                            {cv.weatherStats && (
+                                                <div className="bg-white bg-opacity-80 rounded p-3 border border-gray-200">
+                                                    <p className="font-semibold text-gray-700 mb-2 text-xs uppercase tracking-wide">
+                                                        📡 Actual Weather Data — Open-Meteo Archive API
+                                                    </p>
+                                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                                                        {Object.entries(cv.weatherStats)
+                                                            .filter(([k]) => k !== 'period' && k !== 'eventDates')
+                                                            .map(([key, val]) => (
+                                                                <div key={key} className="flex justify-between border-b border-gray-100 py-0.5">
+                                                                    <span className="text-gray-500 capitalize">
+                                                                        {key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}
+                                                                    </span>
+                                                                    <span className="font-semibold text-gray-700 ml-2">{String(val)}</span>
+                                                                </div>
+                                                            ))}
+                                                        {cv.weatherStats.period && (
+                                                            <div className="col-span-2 text-gray-400 pt-1 text-xs">
+                                                                📅 Analysis period: {cv.weatherStats.period}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Meta */}
+                                            <div className="flex gap-3 text-xs text-gray-500 flex-wrap">
+                                                <span>Source: <strong>{cv.dataSource === 'open_meteo_archive' ? '🌦 Open-Meteo Archive API' : cv.dataSource || cv.modelType}</strong></span>
+                                                {cv.verifiedAt && (
+                                                    <span>Run at: <strong>{new Date(cv.verifiedAt).toLocaleString()}</strong></span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Re-run button */}
+                            <button
+                                onClick={handleRunCalamityVerification}
+                                disabled={runningVerification}
+                                className="shrink-0 flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white text-sm font-medium rounded-lg transition-colors"
+                            >
+                                {runningVerification ? (
+                                    <>
+                                        <span className="animate-spin">⏳</span> Running...
+                                    </>
+                                ) : (
+                                    <>🤖 {cv ? 'Re-run' : 'Run'} Verification</>
+                                )}
+                            </button>
+                        </div>
+                    </Card>
+                );
+            })()}
 
             {/* Loss & Land Info */}
             <div className="grid md:grid-cols-2 gap-6">
