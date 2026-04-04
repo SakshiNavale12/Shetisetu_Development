@@ -162,6 +162,51 @@ function OfficerDashboard() {
                 </button>
             </div>
 
+            {/* Officer Responsibilities */}
+            <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <span>📋</span> Your Responsibilities / आपकी जिम्मेदारियां
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <div className="flex items-start gap-3">
+                            <span className="text-green-600 mt-1">✅</span>
+                            <div>
+                                <p className="font-medium text-gray-800">Verify Loss Reports</p>
+                                <p className="text-sm text-gray-600">Review farmer-submitted loss reports and evidence</p>
+                                <p className="text-xs text-gray-500">सत्यापित करें नुकसान रिपोर्ट और सबूत</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                            <span className="text-blue-600 mt-1">📸</span>
+                            <div>
+                                <p className="font-medium text-gray-800">Conduct Field Visits</p>
+                                <p className="text-sm text-gray-600">Perform on-site inspections and create e-Panchanamas</p>
+                                <p className="text-xs text-gray-500">क्षेत्रीय निरीक्षण करें और ई-पंचनामा बनाएं</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex items-start gap-3">
+                            <span className="text-purple-600 mt-1">👥</span>
+                            <div>
+                                <p className="font-medium text-gray-800">Manage Farmers</p>
+                                <p className="text-sm text-gray-600">Verify farmer registrations and eKYC documents</p>
+                                <p className="text-xs text-gray-500">किसान पंजीकरण और ई-केवाईसी दस्तावेज सत्यापित करें</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                            <span className="text-orange-600 mt-1">📊</span>
+                            <div>
+                                <p className="font-medium text-gray-800">Track Performance</p>
+                                <p className="text-sm text-gray-600">Monitor case resolution and maintain accuracy</p>
+                                <p className="text-xs text-gray-500">केस समाधान और सटीकता बनाए रखें</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <StatCard icon="👨‍🌾" label="Total Farmers" value={stats.totalFarmers} color="border-purple-500" />
